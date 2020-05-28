@@ -583,6 +583,36 @@ int ants_motion( itk::ants::CommandLineParser *parser )
     typename WelchInterpolatorType::Pointer welchInterpolator = WelchInterpolatorType::New();
     interpolator = welchInterpolator;
     }
+ 
+   // Get the output data type and possible parameters
+   std::string whichOutputDataType( "float" );
+   typename OptionType::Pointer outputDataTypeOption = parser->GetOption( "output-data-type" );
+   if( outputOutputDataTypeOption && outputDataTypeOption->GetNumberOfFunctions() )
+    {
+    whichDataType = outputDataTypeOption->GetFunction( 0 )->GetName();
+    ConvertToLowerCase( whichOutputDataType );
+    }
+  
+  typename itk::ants::CommandLineParser::OptionType::Pointer defaultOption =
+    parser->GetOption( "default-value" );
+  if( defaultOption && defaultOption->GetNumberOfFunctions() )
+    {
+    defaultValue = parser->Convert<PixelType>( defaultOption->GetFunction( 0 )->GetName() );
+    }
+  	if( !std::strcmp( outputDataType.c_str(), "char" ) )
+            return antsMortionCorr<double, 3, char>( parser, ImageType );
+          else if( !std::strcmp( outputDataType.c_str(), "uchar" ) )
+            return antsMortionCorr<double, 3, unsigned char>( parser, ImageType );
+          else if( !std::strcmp( outputDataType.c_str(), "short" ) )
+            return antsMortionCorr<double, 3, short>( parser, ImageType );
+          else if( !std::strcmp( outputDataType.c_str(), "int" ) )
+            return antsMortionCorr<double, 3, int>( parser, ImageType );
+          else if( !std::strcmp( outputDataType.c_str(), "float" ) )
+            return antsMortionCorr<double, 3, float>( parser, ImageType );
+          else if( !std::strcmp( outputDataType.c_str(), "double" ) )
+            return antsMortionCorr<double, 3, double>( parser, ImageType );
+          else
+            return antsMortionCorr<double, 3, double>( parser, ImageType );	
 
   typename OptionType::Pointer metricOption = parser->GetOption( "metric" );
   if( !metricOption || metricOption->GetNumberOfFunctions() != numberOfStages  )
@@ -1495,6 +1525,7 @@ int ants_motion( itk::ants::CommandLineParser *parser )
       resampler->SetDefaultPixelValue( 0 );
       resampler->SetInterpolator( interpolator );
       resampler->Update();
+	    
       if ( verbose ) std::cout << " done resampling timepoint : " << timedim << std::endl;
 
       /** Here, we put the resampled 3D image into the 4D volume */
@@ -1902,7 +1933,31 @@ void antsMotionCorrInitializeCommandLineOptions( itk::ants::CommandLineParser *p
   option->SetDescription( description );
   parser->AddOption( option );
   }
+{
+  std::string description =
+    std::string( "Output image data type. " )
+    + std::string( "This is a direct typecast; output values are not rescaled. " )
+    + std::string( "Default is to use the internal data type (float or double). " )
+    + std::string( "uchar is unsigned char; others are signed. " )
+    + std::string( "WARNING: Outputs will be incorrect (overflowed/reinterpreted) " )
+    + std::string( "if values exceed the range allowed by your choice. " )
+    + std::string( "Note that some pixel types are not supported by some image " )
+    + std::string( "formats. e.g. int is not supported by jpg. " );
 
+  OptionType::Pointer option = OptionType::New();
+  option->SetLongName( "output-data-type" );
+  // u is used by antsApplyTranforms but is already in use by --useFixedReferenceImage. No short name is offered.
+  option->SetUsageOption( 0, "char" );
+  option->SetUsageOption( 1, "uchar" );
+  option->SetUsageOption( 2, "short" );
+  option->SetUsageOption( 3, "int" );
+  option->SetUsageOption( 4, "float" );
+  option->SetUsageOption( 5, "double" );
+  option->SetUsageOption( 6, "default" );
+  option->SetDescription( description );
+  parser->AddOption( option );
+  }
+  
   {
   std::string description = std::string( "Verbose output." );
 
